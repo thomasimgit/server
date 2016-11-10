@@ -23,6 +23,7 @@
  */
 namespace OCA\Files_Sharing\Controller;
 
+use OCA\Files\Helper;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCS\OCSBadRequestException;
 use OCP\AppFramework\OCS\OCSException;
@@ -483,9 +484,10 @@ class ShareAPIController extends OCSController {
 
 	/**
 	 * @param \OCP\Files\File|\OCP\Files\Folder $node
+	 * @param boolean $includeTags
 	 * @return DataResponse
 	 */
-	private function getSharedWithMe($node = null) {
+	private function getSharedWithMe($node = null, $includeTags) {
 
 		$userShares = $this->shareManager->getSharedWith($this->currentUser, \OCP\Share::SHARE_TYPE_USER, $node, -1, 0);
 		$groupShares = $this->shareManager->getSharedWith($this->currentUser, \OCP\Share::SHARE_TYPE_GROUP, $node, -1, 0);
@@ -506,6 +508,10 @@ class ShareAPIController extends OCSController {
 					// Ignore this share
 				}
 			}
+		}
+
+		if ($includeTags) {
+			$formatted = Helper::populateTags($formatted, 'file_source');
 		}
 
 		return new DataResponse($formatted);
@@ -571,7 +577,8 @@ class ShareAPIController extends OCSController {
 		$shared_with_me = 'false',
 		$reshares = 'false',
 		$subfiles = 'false',
-		$path = null
+		$path = null,
+		$include_tags = 'false'
 	) {
 
 		if ($path !== null) {
@@ -587,7 +594,7 @@ class ShareAPIController extends OCSController {
 		}
 
 		if ($shared_with_me === 'true') {
-			$result = $this->getSharedWithMe($path);
+			$result = $this->getSharedWithMe($path, $include_tags);
 			return $result;
 		}
 
@@ -631,6 +638,10 @@ class ShareAPIController extends OCSController {
 			} catch (NotFoundException $e) {
 				//Ignore share
 			}
+		}
+
+		if ($include_tags) {
+			$formatted = Helper::populateTags($formatted, 'file_source');
 		}
 
 		return new DataResponse($formatted);

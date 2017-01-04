@@ -2924,7 +2924,6 @@ class ManagerTest extends \Test\TestCase {
 					'user2',
 					'user3',
 				],
-				'remote' => false,
 				'public' => true,
 			]);
 
@@ -2940,7 +2939,6 @@ class ManagerTest extends \Test\TestCase {
 					'user5',
 				],
 				'remote' => true,
-				'public' => false,
 			]);
 
 		$this->rootFolder->method('getUserFolder')

@@ -48,6 +48,7 @@ use OC\AppFramework\Http\Request;
 use OC\AppFramework\Utility\TimeFactory;
 use OC\Authentication\LoginCredentials\Store;
 use OC\Command\AsyncBus;
+use OC\Contacts\ContactsMenu\ActionFactory;
 use OC\Diagnostics\EventLogger;
 use OC\Diagnostics\NullEventLogger;
 use OC\Diagnostics\NullQueryLogger;
@@ -93,8 +94,10 @@ use OC\Tagging\TagMapper;
 use OCA\Theming\ThemingDefaults;
 use OCP\Federation\ICloudIdManager;
 use OCP\Authentication\LoginCredentials\IStore;
+use OCP\Contacts\ContactsMenu\IActionFactory;
 use OCP\IL10N;
 use OCP\IServerContainer;
+use OCP\IURLGenerator;
 use OCP\RichObjectStrings\IValidator;
 use OCP\Security\IContentSecurityPolicyManager;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -122,6 +125,7 @@ class Server extends ServerContainer implements IServerContainer {
 		$this->registerService('ContactsManager', function ($c) {
 			return new ContactsManager();
 		});
+		$this->registerAlias(IActionFactory::class, ActionFactory::class);
 
 		$this->registerService('PreviewManager', function (Server $c) {
 			return new PreviewManager(
@@ -343,6 +347,7 @@ class Server extends ServerContainer implements IServerContainer {
 				$c->getSystemConfig()
 			);
 		});
+		$this->registerAlias(\OCP\IConfig::class, 'AllConfig');
 		$this->registerService('SystemConfig', function ($c) use ($config) {
 			return new \OC\SystemConfig($config);
 		});
@@ -365,6 +370,7 @@ class Server extends ServerContainer implements IServerContainer {
 				$cacheFactory
 			);
 		});
+		$this->registerAlias(IURLGenerator::class, 'URLGenerator');
 		$this->registerService('AppHelper', function ($c) {
 			return new \OC\AppHelper();
 		});

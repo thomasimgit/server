@@ -70,6 +70,7 @@ class SyncService {
 	/**
 	 * @param string $url
 	 * @param string $userName
+	 * @param string $addressBookUrl
 	 * @param string $sharedSecret
 	 * @param string $syncToken
 	 * @param int $targetBookId
@@ -78,14 +79,14 @@ class SyncService {
 	 * @return string
 	 * @throws \Exception
 	 */
-	public function syncRemoteAddressBook($url, $userName, $sharedSecret, $syncToken, $targetBookId, $targetPrincipal, $targetProperties) {
+	public function syncRemoteAddressBook($url, $userName, $addressBookUrl, $sharedSecret, $syncToken, $targetBookId, $targetPrincipal, $targetProperties) {
 		// 1. create addressbook
 		$book = $this->ensureSystemAddressBookExists($targetPrincipal, $targetBookId, $targetProperties);
 		$addressBookId = $book['id'];
 
 		// 2. query changes
 		try {
-			$response = $this->requestSyncReport($url, $userName, $sharedSecret, $syncToken);
+			$response = $this->requestSyncReport($url, $userName, $addressBookUrl, $sharedSecret, $syncToken);
 		} catch (ClientHttpException $ex) {
 			if ($ex->getCode() === Http::STATUS_UNAUTHORIZED) {
 				// remote server revoked access to the address book, remove it
@@ -100,7 +101,7 @@ class SyncService {
 		foreach ($response['response'] as $resource => $status) {
 			$cardUri = basename($resource);
 			if (isset($status[200])) {
-				$vCard = $this->download($url, $sharedSecret, $resource);
+				$vCard = $this->download($url, $userName, $sharedSecret, $resource);
 				$existingCard = $this->backend->getCard($addressBookId, $cardUri);
 				if ($existingCard === false) {
 					$this->backend->createCard($addressBookId, $cardUri, $vCard['body']);
@@ -135,11 +136,12 @@ class SyncService {
 	/**
 	 * @param string $url
 	 * @param string $userName
+	 * @param string $addressBookUrl
 	 * @param string $sharedSecret
 	 * @param string $syncToken
 	 * @return array
 	 */
-	protected function requestSyncReport($url, $userName, $sharedSecret, $syncToken) {
+	protected function requestSyncReport($url, $userName, $addressBookUrl, $sharedSecret, $syncToken) {
 		$settings = [
 			'baseUri' => $url . '/',
 			'userName' => $userName,
@@ -148,7 +150,6 @@ class SyncService {
 		$client = new Client($settings);
 		$client->setThrowExceptions(true);
 
-		$addressBookUrl = "remote.php/dav/addressbooks/system/system/system";
 		$body = $this->buildSyncCollectionRequestBody($syncToken);
 
 		$response = $client->request('REPORT', $addressBookUrl, $body, [
@@ -166,10 +167,10 @@ class SyncService {
 	 * @param string $resourcePath
 	 * @return array
 	 */
-	protected function download($url, $sharedSecret, $resourcePath) {
+	protected function download($url, $userName, $sharedSecret, $resourcePath) {
 		$settings = [
 			'baseUri' => $url,
-			'userName' => 'system',
+			'userName' => $userName,
 			'password' => $sharedSecret,
 		];
 		$client = new Client($settings);

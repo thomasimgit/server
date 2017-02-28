@@ -26,43 +26,43 @@
 	'use strict';
 
 	var LOADING_TEMPLATE = ''
-			+ '<div class="emptycontent">'
-			+ '    <a class="icon-loading"></a>'
-			+ '    <h2>{{loadingText}}</h2>'
-			+ '</div>';
+		+ '<div class="emptycontent">'
+		+ '    <a class="icon-loading"></a>'
+		+ '    <h2>{{loadingText}}</h2>'
+		+ '</div>';
 	var ERROR_TEMPLATE = ''
-			+ '<div class="emptycontent">'
-			+ '    <h2>' + t('core', 'Could not load your contacts.') + '</h2>'
-			+ '</div>';
+		+ '<div class="emptycontent">'
+		+ '    <h2>' + t('core', 'Could not load your contacts.') + '</h2>'
+		+ '</div>';
 	var CONTENT_TEMPLATE = ''
-			+ '<input id="contactsmenu-search" type="search" placeholder="Search contacts …" value="{{searchTerm}}">'
-			+ '<div class="content">'
-			+ '    {{#unless contacts.length}}<div class="emptycontent">' + t('core', 'No contacts found.') + '</div>{{/unless}}'
-			+ '    <div id="contactsmenu-contacts"></div>'
-			+ '    {{#if contactsAppEnabled}}<div class="footer"><a href="{{contactsAppURL}}">' + t('core', 'Show all contacts …') + '</a></div>{{/if}}'
-			+ '</div>';
+		+ '<input id="contactsmenu-search" type="search" placeholder="Search contacts …" value="{{searchTerm}}">'
+		+ '<div class="content">'
+		+ '    {{#unless contacts.length}}<div class="emptycontent">' + t('core', 'No contacts found.') + '</div>{{/unless}}'
+		+ '    <div id="contactsmenu-contacts"></div>'
+		+ '    {{#if contactsAppEnabled}}<div class="footer"><a href="{{contactsAppURL}}">' + t('core', 'Show all contacts …') + '</a></div>{{/if}}'
+		+ '</div>';
 	var CONTACT_TEMPLATE = ''
-			+ '<div class="avatar"></div>'
-			+ '<div class="body">'
-			+ '    <div class="full-name">{{contact.fullName}}</div>'
-			+ '    <div class="last-message">{{contact.lastMessage}}</div>'
-			+ '</div>'
-			+ '<a class="top-action {{contact.topAction.icon}}" href="{{contact.topAction.hyperlink}}"></a>'
-			+ '{{#if contact.actions.length}}'
-			+ '    <span class="other-actions icon-more"></span>'
-			+ '    <div class="popovermenu">'
-			+ '        <ul>'
-			+ '            {{#each contact.actions}}'
-			+ '            <li>'
-			+ '                <a href="{{hyperlink}}">'
-			+ '                    <span class="{{icon}}"></span>'
-			+ '                    <span>{{title}}</span>'
-			+ '                </a>'
-			+ '            </li>'
-			+ '            {{/each}}'
-			+ '        </ul>'
-			+ '    </div>'
-			+ '{{/if}}';
+		+ '<div class="avatar"></div>'
+		+ '<div class="body">'
+		+ '    <div class="full-name">{{contact.fullName}}</div>'
+		+ '    <div class="last-message">{{contact.lastMessage}}</div>'
+		+ '</div>'
+		+ '<a class="top-action {{contact.topAction.icon}}" href="{{contact.topAction.hyperlink}}"></a>'
+		+ '{{#if contact.actions.length}}'
+		+ '    <span class="other-actions icon-more"></span>'
+		+ '    <div class="popovermenu">'
+		+ '        <ul>'
+		+ '            {{#each contact.actions}}'
+		+ '            <li>'
+		+ '                <a href="{{hyperlink}}">'
+		+ '                    <span class="{{icon}}"></span>'
+		+ '                    <span>{{title}}</span>'
+		+ '                </a>'
+		+ '            </li>'
+		+ '            {{/each}}'
+		+ '        </ul>'
+		+ '    </div>'
+		+ '{{/if}}';
 
 	/**
 	 * @class Contact
@@ -307,7 +307,9 @@
 	});
 
 	/**
-	 * @param {array} options
+	 * @param {Object} options
+	 * @param {jQuery} options.el
+	 * @param {jQuery} options.trigger
 	 * @class ContactsMenu
 	 */
 	var ContactsMenu = function(options) {
@@ -321,9 +323,6 @@
 		/** @type {jQuery} */
 		_$trigger: undefined,
 
-		/** @type {boolean} */
-		_open: false,
-
 		/** @type {ContactsMenuView} */
 		_view: undefined,
 
@@ -331,7 +330,9 @@
 		_contactsPromise: undefined,
 
 		/**
-		 * @param {array} options
+		 * @param {Object} options
+		 * @param {jQuery} options.el - the element to render the menu in
+		 * @param {jQuery} options.trigger - the element to click on to open the menu
 		 * @returns {undefined}
 		 */
 		initialize: function(options) {
@@ -348,7 +349,6 @@
 			});
 
 			OC.registerMenu(this._$trigger, this.$el, function() {
-				console.log('TOGGLE');
 				self._toggleVisibility(true);
 			});
 			this.$el.on('beforeHide', function() {
@@ -357,19 +357,24 @@
 		},
 
 		/**
+		 * @private
 		 * @param {boolean} show
-		 * @returns {undefined}
+		 * @returns {Promise}
 		 */
 		_toggleVisibility: function(show) {
 			if (show) {
-				this._loadContacts();
-				this._open = true;
+				return this._loadContacts();
 			} else {
 				this.$el.html('');
-				this._open = false;
+				return Promise.resolve();
 			}
 		},
 
+		/**
+		 * @private
+		 * @param {string|undefined} searchTerm
+		 * @returns {Promise}
+		 */
 		_getContacts: function(searchTerm) {
 			var url = OC.generateUrl('/contactsmenu/contacts');
 			return Promise.resolve($.ajax(url, {
@@ -377,13 +382,13 @@
 				data: {
 					filter: searchTerm
 				}
-			})).then(function(data) {
-				// Convert contact entries to Backbone collection
-				data.contacts = new ContactCollection(data.contacts);
-				return data;
-			});
+			}));
 		},
 
+		/**
+		 * @param {string|undefined} searchTerm
+		 * @returns {undefined}
+		 */
 		_loadContacts: function(searchTerm) {
 			var self = this;
 
@@ -398,8 +403,11 @@
 					term: searchTerm
 				}));
 			}
-			self._contactsPromise.then(function(contacts) {
-				self._view.showContacts(contacts, searchTerm);
+			return self._contactsPromise.then(function(data) {
+				// Convert contact entries to Backbone collection
+				data.contacts = new ContactCollection(data.contacts);
+
+				self._view.showContacts(data, searchTerm);
 			}, function(e) {
 				self._view.showError();
 				console.error('could not load contacts', e);
@@ -407,7 +415,7 @@
 				// Delete promise, so that contacts are fetched again when the
 				// menu is opened the next time.
 				delete self._contactsPromise;
-			});
+			}).catch(console.error.bind(this));
 		}
 	};
 

@@ -50,12 +50,11 @@
 		+ '<a class="top-action {{contact.topAction.icon}}" href="{{contact.topAction.hyperlink}}"></a>'
 		+ '{{#if contact.actions.length}}'
 		+ '    <span class="other-actions icon-more"></span>'
-		+ '    <div class="popovermenu">'
+		+ '    <div class="menu">'
 		+ '        <ul>'
 		+ '            {{#each contact.actions}}'
 		+ '            <li>'
-		+ '                <a href="{{hyperlink}}">'
-		+ '                    <span class="{{icon}}"></span>'
+		+ '                <a href="{{hyperlink}}" class="{{icon}}">'
 		+ '                    <span>{{title}}</span>'
 		+ '                </a>'
 		+ '            </li>'
@@ -90,6 +89,9 @@
 		/** @type {ContactsCollection} */
 		_collection: undefined,
 
+		/** @type {array} */
+		_subViews: [],
+
 		/**
 		 * @param {object} options
 		 * @returns {undefined}
@@ -104,6 +106,7 @@
 		render: function() {
 			var self = this;
 			self.$el.html('');
+			self._subViews = [];
 
 			self._collection.forEach(function(contact) {
 				var item = new ContactsListItemView({
@@ -111,9 +114,23 @@
 				});
 				item.render();
 				self.$el.append(item.$el);
+				item.on('toggle:actionmenu', self._onChildActionMenuToggle, self);
+				self._subViews.push(item);
 			});
 
 			return self;
+		},
+
+		/**
+		 * Event callback to propagate opening (another) entry's action menu
+		 *
+		 * @param {type} $src
+		 * @returns {undefined}
+		 */
+		_onChildActionMenuToggle: function($src) {
+			this._subViews.forEach(function(view) {
+				view.trigger('parent:toggle:actionmenu', $src);
+			});
 		}
 	});
 
@@ -130,6 +147,9 @@
 
 		/** @type {Contact} */
 		_model: undefined,
+
+		/** @type {boolean} */
+		_actionMenuShown: false,
 
 		events: {
 			'click .icon-more': '_onToggleActionsMenu'
@@ -152,6 +172,7 @@
 		 */
 		initialize: function(options) {
 			this._model = options.model;
+			this.on('parent:toggle:actionmenu', this._onOtherActionMenuOpened, this);
 		},
 
 		/**
@@ -168,8 +189,34 @@
 			return this;
 		},
 
+		/**
+		 * Toggle the visibility of the action popover menu
+		 *
+		 * @private
+		 * @returns {undefined}
+		 */
 		_onToggleActionsMenu: function() {
-			this.$('.popovermenu').toggleClass('open');
+			this._actionMenuShown = !this._actionMenuShown;
+			if (this._actionMenuShown) {
+				this.$('.menu').show();
+			} else {
+				this.$('.menu').hide();
+			}
+			this.trigger('toggle:actionmenu', this.$el);
+		},
+
+		/**
+		 * @private
+		 * @argument {jQuery} $src
+		 * @returns {undefined}
+		 */
+		_onOtherActionMenuOpened: function($src) {
+			if (this.$el.is($src)) {
+				// Ignore
+				return;
+			}
+			this._actionMenuShown = false;
+			this.$('.menu').hide();
 		}
 	});
 
@@ -190,13 +237,17 @@
 		/** @type {undefined|ContactCollection} */
 		_contacts: undefined,
 
+		events: {
+			'keyup #contactsmenu-search': '_onSearch'
+		},
+
+		/**
+		 * @returns {undefined}
+		 */
 		_onSearch: _.debounce(function() {
 			this.trigger('search', this.$('#contactsmenu-search').val());
 		}, 700),
 
-		events: {
-			'keyup #contactsmenu-search': '_onSearch'
-		},
 
 		/**
 		 * @param {object} data
@@ -336,24 +387,22 @@
 		 * @returns {undefined}
 		 */
 		initialize: function(options) {
-			var self = this;
-
-			self.$el = options.el;
-			self._$trigger = options.trigger;
+			this.$el = options.el;
+			this._$trigger = options.trigger;
 
 			this._view = new ContactsMenuView({
-				el: self.$el
+				el: this.$el
 			});
 			this._view.on('search', function(searchTerm) {
-				self._loadContacts(searchTerm);
-			});
+				this._loadContacts(searchTerm);
+			}, this);
 
 			OC.registerMenu(this._$trigger, this.$el, function() {
-				self._toggleVisibility(true);
-			});
+				this._toggleVisibility(true);
+			}.bind(this));
 			this.$el.on('beforeHide', function() {
-				self._toggleVisibility(false);
-			});
+				this._toggleVisibility(false);
+			}.bind(this));
 		},
 
 		/**

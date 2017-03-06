@@ -24,8 +24,8 @@
 
 describe('Contacts menu', function() {
 	var $triggerEl,
-		$menuEl,
-		menu;
+			$menuEl,
+			menu;
 
 	/**
 	 * @private
@@ -136,7 +136,6 @@ describe('Contacts menu', function() {
 			expect($menuEl.html()).toContain('Acosta Lancaster');
 			expect($menuEl.html()).toContain('Adeline Snider');
 			expect($menuEl.html()).toContain('Show all contacts …');
-			expect($menuEl.html()).toContain('Show all contacts …');
 			done();
 		}, function(e) {
 			done.fail(e);
@@ -144,7 +143,7 @@ describe('Contacts menu', function() {
 
 	});
 
-	it('doesn\'t show a link to the contacts app if it\'s disabled', function() {
+	it('doesn\'t show a link to the contacts app if it\'s disabled', function(done) {
 		spyOn(menu, '_getContacts').and.returnValue(Promise.resolve({
 			contacts: [
 				{
@@ -170,12 +169,83 @@ describe('Contacts menu', function() {
 					lastMessage: ''
 				}
 			],
-			contactsAppEnabled: true
+			contactsAppEnabled: false
 		}));
 
 		openMenu().then(function() {
 			expect(menu._getContacts).toHaveBeenCalled();
 			expect($menuEl.html()).not.toContain('Show all contacts …');
+			done();
+		}, function(e) {
+			done.fail(e);
+		});
+	});
+
+	it('shows only one entry\'s action menu at a time', function(done) {
+		spyOn(menu, '_getContacts').and.returnValue(Promise.resolve({
+			contacts: [
+				{
+					id: null,
+					fullName: 'Acosta Lancaster',
+					topAction: {
+						title: 'Mail',
+						icon: 'icon-mail',
+						hyperlink: 'mailto:deboraoliver%40centrexin.com'
+					},
+					actions: [
+						{
+							title: 'Details',
+							icon: 'icon-info',
+							hyperlink: 'https:\/\/localhost\/index.php\/apps\/contacts'
+						}
+					],
+					lastMessage: ''
+				},
+				{
+					id: null,
+					fullName: 'Adeline Snider',
+					topAction: {
+						title: 'Mail',
+						icon: 'icon-mail',
+						hyperlink: 'mailto:ceciliasoto%40essensia.com'
+					},
+					actions: [
+						{
+							title: 'Details',
+							icon: 'icon-info',
+							hyperlink: 'https://localhost\/index.php\/apps\/contacts'
+						}
+					],
+					lastMessage: 'cu'
+				}
+			],
+			contactsAppEnabled: true
+		}));
+
+		openMenu().then(function() {
+			expect(menu._getContacts).toHaveBeenCalled();
+			expect($menuEl.html()).toContain('Adeline Snider');
+			expect($menuEl.html()).toContain('Show all contacts …');
+
+			// Both menus are closed at the beginning
+			expect($menuEl.find('.contact').eq(0).find('.menu').is(':visible')).toBeFalsy();
+			expect($menuEl.find('.contact').eq(1).find('.menu').is(':visible')).toBeFalsy();
+
+			// Open the first one
+			$menuEl.find('.contact').eq(0).find('.other-actions').click();
+			expect($menuEl.find('.contact').eq(0).find('.menu').css('display')).toBe('block');
+			expect($menuEl.find('.contact').eq(1).find('.menu').css('display')).toBe('none');
+
+			// Open the second one
+			$menuEl.find('.contact').eq(1).find('.other-actions').click();
+			expect($menuEl.find('.contact').eq(0).find('.menu').css('display')).toBe('none');
+			expect($menuEl.find('.contact').eq(1).find('.menu').css('display')).toBe('block');
+
+			// Close the second one
+			$menuEl.find('.contact').eq(1).find('.other-actions').click();
+			expect($menuEl.find('.contact').eq(0).find('.menu').css('display')).toBe('none');
+			expect($menuEl.find('.contact').eq(1).find('.menu').css('display')).toBe('none');
+
 			done();
 		}, function(e) {
 			done.fail(e);

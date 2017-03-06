@@ -1063,90 +1063,91 @@ span.ui-icon {
 		cursor: pointer;
 		opacity: .7;
 	}
+}
 
-	.menu {
-		right: 70px;
-		width: 350px;
+#contactsmenu > .menu {
+	right: 70px;
+	width: 350px;
 
-		&::after {
-			right: 22px;
+	&::after {
+		right: 22px;
+	}
+
+	div.emptycontent {
+		margin-top: 25vh;
+		margin-bottom: 5vh;
+		.icon-loading {
+			position: inherit;
+		}
+	}
+
+	div.content {
+		/* show ~4.5 entries */
+		max-height: 238px;
+		overflow-y: auto;
+
+		.footer {
+			text-align: center;
+			line-height: 50px;
+		}
+	}
+
+	div.contact {
+		display: flex;
+		position: relative;
+		align-items: center;
+		padding: 10px;
+		border-bottom: 1px solid #eeeeee;
+
+		:last-of-type {
+			border-bottom: none;
 		}
 
-		div.emptycontent {
-			margin-top: 25vh;
-			margin-bottom: 5vh;
-			.icon-loading {
-				position: inherit;
-			}
+		.avatar {
+			display: inline-block;
 		}
 
-		div.content {
-			/* show ~4.5 entries */
-			max-height: 238px;
-			overflow-y: auto;
+		.body {
+			flex-grow: 1;
+			padding-left: 8px;
 
-			.footer {
-				text-align: center;
-				line-height: 50px;
-			}
-		}
-
-		div.contact {
-			display: flex;
-			position: relative;
-			align-items: center;
-			padding: 10px;
-			border-bottom: 1px solid #eeeeee;
-
-			:last-of-type {
-				border-bottom: none;
+			div {
+				position: relative;
+				width: 100%;
 			}
 
-			.avatar {
-				display: inline-block;
+			div.full-name, div.last-message {
+				/* TODO: don't use fixed width */
+				width: 220px;
+				overflow: hidden;
+				white-space: nowrap;
+				text-overflow: ellipsis;
 			}
-
-			.body {
-				flex-grow: 1;
-				padding-left: 8px;
-
-				div {
-					position: relative;
-					width: 100%;
-				}
-
-				div.full-name, div.last-message {
-					/* TODO: don't use fixed width */
-					width: 220px;
-					overflow: hidden;
-					white-space: nowrap;
-					text-overflow: ellipsis;
-				}
-				div.last-message {
-					opacity: 0.5;
-				}
-			}
-
-			.top-action, .other-actions {
-				width: 16px;
-				height: 16px;
-				padding: 8px;
+			div.last-message {
 				opacity: 0.5;
-				cursor: pointer;
-
-				:hover {
-					opacity: 1;
-				}
 			}
+		}
 
-			/* actions menu */
-			.popovermenu {
-				right: 3px;
-				top: 53px;
+		.top-action, .other-actions {
+			width: 16px;
+			height: 16px;
+			padding: 8px;
+			opacity: 0.5;
+			cursor: pointer;
+
+			:hover {
+				opacity: 1;
 			}
+		}
+
+		/* actions menu */
+		.menu {
+			right: 3px;
+			top: 53px;
 		}
 	}
 }
+
 
 #contactsmenu-search {
 	width: calc(100% - 16px);

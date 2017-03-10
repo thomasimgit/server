@@ -67,7 +67,7 @@ class RequestHandlerControllerTest extends TestCase {
 
 	/** @var  \OCA\FederatedFileSharing\AddressHandler|\PHPUnit_Framework_MockObject_MockObject */
 	private $addressHandler;
-	
+
 	/** @var  IUserManager|\PHPUnit_Framework_MockObject_MockObject */
 	private $userManager;
 
@@ -107,7 +107,7 @@ class RequestHandlerControllerTest extends TestCase {
 		$this->userManager = $this->getMockBuilder('OCP\IUserManager')->getMock();
 
 		$this->cloudIdManager = new CloudIdManager();
-		
+
 		$this->registerHttpHelper($httpHelperMock);
 
 		$this->s2s = new RequestHandlerController(
@@ -270,17 +270,13 @@ class RequestHandlerControllerTest extends TestCase {
 			->method('newClient')
 			->willReturn($client);
 
-		$discoveryManager = new DiscoveryManager(
-			\OC::$server->getMemCacheFactory(),
-			$httpClientService
-		);
 		$manager = new \OCA\Files_Sharing\External\Manager(
 			\OC::$server->getDatabaseConnection(),
 			Filesystem::getMountManager(),
 			Filesystem::getLoader(),
 			$httpClientService,
 			\OC::$server->getNotificationManager(),
-			$discoveryManager,
+			\OC::$server->getOCSDiscoveryService(),
 			$toDelete
 		);
 

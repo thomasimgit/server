@@ -25,44 +25,53 @@
 (function(OC, $, _, Handlebars) {
 	'use strict';
 
+	var MENU_TEMPLATE = ''
+			+ '<input id="contactsmenu-search" type="search" placeholder="Search contacts …" value="{{searchTerm}}">'
+			+ '<div class="content">'
+			+ '</div>';
+	var CONTACTS_LIST_TEMPLATE = ''
+			+ '{{#unless contacts.length}}'
+			+ '<div class="emptycontent">'
+			+ '    <a class="icon-search"></a>'
+			+ '    <h2>' + t('core', 'No contacts found.') + '</h2>'
+			+ '</div>'
+			+ '{{/unless}}'
+			+ '<div id="contactsmenu-contacts"></div>'
+			+ '{{#if contactsAppEnabled}}<div class="footer"><a href="{{contactsAppURL}}">' + t('core', 'Show all contacts …') + '</a></div>{{/if}}';
 	var LOADING_TEMPLATE = ''
-		+ '<div class="emptycontent">'
-		+ '    <a class="icon-loading"></a>'
-		+ '    <h2>{{loadingText}}</h2>'
-		+ '</div>';
+			+ '<div class="emptycontent">'
+			+ '    <a class="icon-loading"></a>'
+			+ '    <h2>{{loadingText}}</h2>'
+			+ '</div>';
 	var ERROR_TEMPLATE = ''
-		+ '<div class="emptycontent">'
-		+ '    <h2>' + t('core', 'Could not load your contacts.') + '</h2>'
-		+ '</div>';
-	var CONTENT_TEMPLATE = ''
-		+ '<input id="contactsmenu-search" type="search" placeholder="Search contacts …" value="{{searchTerm}}">'
-		+ '<div class="content">'
-		+ '    {{#unless contacts.length}}<div class="emptycontent">' + t('core', 'No contacts found.') + '</div>{{/unless}}'
-		+ '    <div id="contactsmenu-contacts"></div>'
-		+ '    {{#if contactsAppEnabled}}<div class="footer"><a href="{{contactsAppURL}}">' + t('core', 'Show all contacts …') + '</a></div>{{/if}}'
-		+ '</div>';
+			+ '<div class="emptycontent">'
+			+ '    <h2>' + t('core', 'Could not load your contacts.') + '</h2>'
+			+ '</div>';
 	var CONTACT_TEMPLATE = ''
-		+ '<div class="avatar"></div>'
-		+ '<div class="body">'
-		+ '    <div class="full-name">{{contact.fullName}}</div>'
-		+ '    <div class="last-message">{{contact.lastMessage}}</div>'
-		+ '</div>'
-		+ '<a class="top-action {{contact.topAction.icon}}" href="{{contact.topAction.hyperlink}}"></a>'
-		+ '{{#if contact.actions.length}}'
-		+ '    <span class="other-actions icon-more"></span>'
-		+ '    <div class="menu popovermenu">'
-		+ '        <ul>'
-		+ '            {{#each contact.actions}}'
-		+ '            <li>'
-		+ '                <a href="{{hyperlink}}">'
-		+ '                    <span class="{{icon}}"></span>'
-		+ '                    <span>{{title}}</span>'
-		+ '                </a>'
-		+ '            </li>'
-		+ '            {{/each}}'
-		+ '        </ul>'
-		+ '    </div>'
-		+ '{{/if}}';
+			+ '<div class="avatar"></div>'
+			+ '<div class="body">'
+			+ '    <div class="full-name">{{contact.fullName}}</div>'
+			+ '    <div class="last-message">{{contact.lastMessage}}</div>'
+			+ '</div>'
+			+ '<a class="top-action {{contact.topAction.icon}}" href="{{contact.topAction.hyperlink}}"></a>'
+			+ '{{#if contact.hasManyActions}}'
+			+ '    <span class="other-actions icon-more"></span>'
+			+ '    <div class="menu popovermenu">'
+			+ '        <ul>'
+			+ '            {{#each contact.actions}}'
+			+ '            <li>'
+			+ '                <a href="{{hyperlink}}">'
+			+ '                    <span class="{{icon}}"></span>'
+			+ '                    <span>{{title}}</span>'
+			+ '                </a>'
+			+ '            </li>'
+			+ '            {{/each}}'
+			+ '        </ul>'
+			+ '    </div>'
+			+ '{{/if}}'
+			+ '{{#if contact.hasTwoActions}}'
+			+ '<a class="second-action {{contact.secondAction.icon}}" href="{{contact.secondAction.hyperlink}}"></a>'
+			+ '{{/if}}';
 
 	/**
 	 * @class Contact
@@ -71,7 +80,22 @@
 		defaults: {
 			fullName: '',
 			lastMessage: '',
-			actions: []
+			actions: [],
+			hasTwoActions: false,
+			hasManyActions: false
+		},
+
+		/**
+		 * @returns {undefined}
+		 */
+		initialize: function() {
+			// Add needed property for easier template rendering
+			if (this.get('actions').length === 1) {
+				this.set('hasTwoActions', true);
+				this.set('secondAction', this.get('actions')[0]);
+			} else {
+				this.set('hasManyActions', true);
+			}
 		}
 	});
 
@@ -235,11 +259,15 @@
 		/** @type {undefined|function} */
 		_contentTemplate: undefined,
 
+		/** @type {undefined|function} */
+		_contactsTemplate: undefined,
+
 		/** @type {undefined|ContactCollection} */
 		_contacts: undefined,
 
 		events: {
-			'keyup #contactsmenu-search': '_onSearch'
+			'keyup #contactsmenu-search': '_onSearch',
+			'mouseup #contactsmenu-search': '_onSearch'
 		},
 
 		/**
@@ -248,7 +276,6 @@
 		_onSearch: _.debounce(function() {
 			this.trigger('search', this.$('#contactsmenu-search').val());
 		}, 700),
-
 
 		/**
 		 * @param {object} data
@@ -278,9 +305,20 @@
 		 */
 		contentTemplate: function(data) {
 			if (!this._contentTemplate) {
-				this._contentTemplate = Handlebars.compile(CONTENT_TEMPLATE);
+				this._contentTemplate = Handlebars.compile(MENU_TEMPLATE);
 			}
 			return this._contentTemplate(data);
+		},
+
+		/**
+		 * @param {object} data
+		 * @returns {string}
+		 */
+		contactsTemplate: function(data) {
+			if (!this._contactsTemplate) {
+				this._contactsTemplate = Handlebars.compile(CONTACTS_LIST_TEMPLATE);
+			}
+			return this._contactsTemplate(data);
 		},
 
 		/**
@@ -296,21 +334,20 @@
 		 * @returns {undefined}
 		 */
 		showLoading: function(text) {
+			this.render();
 			this._contacts = undefined;
-			this.render({
-				loading: true,
+			this.$('.content').html(this.loadingTemplate({
 				loadingText: text
-			});
+			}));
 		},
 
 		/**
 		 * @returns {undefined}
 		 */
 		showError: function() {
+			this.render();
 			this._contacts = undefined;
-			this.render({
-				error: true
-			});
+			this.$('.content').html(this.errorTemplate());
 		},
 
 		/**
@@ -321,12 +358,20 @@
 		showContacts: function(viewData, searchTerm) {
 			this._contacts = viewData.contacts;
 			this.render({
-				loading: false,
-				searchTerm: searchTerm,
+				contacts: viewData.contacts
+			});
+
+			var list = new ContactsListView({
+				collection: viewData.contacts
+			});
+			list.render();
+			this.$('.content').html(this.contactsTemplate({
 				contacts: viewData.contacts,
+				searchTerm: searchTerm,
 				contactsAppEnabled: viewData.contactsAppEnabled,
 				contactsAppURL: OC.generateUrl('/apps/contacts')
-			});
+			}));
+			this.$('#contactsmenu-contacts').html(list.$el);
 		},
 
 		/**
@@ -334,25 +379,12 @@
 		 * @returns {self}
 		 */
 		render: function(data) {
-			if (!!data.error) {
-				this.$el.html(this.errorTemplate(data));
-				return this;
-			}
-			if (!!data.loading) {
-				this.$el.html(this.loadingTemplate(data));
-				return this;
-			}
-
-			var list = new ContactsListView({
-				collection: data.contacts
-			});
-			list.render();
+			var searchVal = this.$('#contactsmenu-search').val();
 			this.$el.html(this.contentTemplate(data));
-			this.$('#contactsmenu-contacts').html(list.$el);
 
 			// Focus search
+			this.$('#contactsmenu-search').val(searchVal);
 			this.$('#contactsmenu-search').focus();
-
 			return this;
 		}
 

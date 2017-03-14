@@ -33,7 +33,7 @@ namespace OC\Settings\Controller;
 use OC\Accounts\AccountManager;
 use OC\AppFramework\Http;
 use OC\ForbiddenException;
-use OC\User\User;
+use OC\Security\IdentityProof\Manager;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\DataResponse;
@@ -93,6 +93,8 @@ class UsersController extends Controller {
 	private $timeFactory;
 	/** @var ICrypto */
 	private $crypto;
+	/** @var Manager */
+	private $keyManager;
 
 
 	/**
@@ -115,6 +117,7 @@ class UsersController extends Controller {
 	 * @param ISecureRandom $secureRandom
 	 * @param ITimeFactory $timeFactory
 	 * @param ICrypto $crypto
+	 * @param Manager $keyManager
 	 */
 	public function __construct($appName,
 								IRequest $request,
@@ -134,7 +137,8 @@ class UsersController extends Controller {
 								AccountManager $accountManager,
 								ISecureRandom $secureRandom,
 								ITimeFactory $timeFactory,
-								ICrypto $crypto) {
+								ICrypto $crypto,
+								Manager $keyManager) {
 		parent::__construct($appName, $request);
 		$this->userManager = $userManager;
 		$this->groupManager = $groupManager;
@@ -152,6 +156,7 @@ class UsersController extends Controller {
 		$this->secureRandom = $secureRandom;
 		$this->timeFactory = $timeFactory;
 		$this->crypto = $crypto;
+		$this->keyManager = $keyManager;
 
 		// check for encryption state - TODO see formatUserForIndex
 		$this->isEncryptionAppEnabled = $appManager->isEnabledForUser('encryption');
@@ -545,6 +550,41 @@ class UsersController extends Controller {
 			),
 			Http::STATUS_FORBIDDEN
 		);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @NoSubadminRequired
+	 * @PasswordConfirmationRequired
+	 *
+	 * @param string $account
+	 * @return DataResponse
+	 */
+	public function getVerificationCode($account) {
+
+		$user = $this->userSession->getUser();
+		$cloudId = $user->getCloudId();
+		$message = "My Federated Cloud ID: " . $cloudId;
+		$privateKey = $this->keyManager->getKey($user)->getPrivate();
+		openssl_sign(json_encode($message), $signature, $privateKey, OPENSSL_ALGO_SHA512);
+		$signatureBase64 = base64_encode($signature);
+
+		$code = $message . ' ' . $signatureBase64;
+
+		switch ($account) {
+			case 'verify-twitter':
+				$msg = $this->l10n->t('In order to verify your Twitter account post following tweet on Twitter:');
+				$code = substr($code, 0 , 140);
+				break;
+			case 'verify-website':
+				$msg = $this->l10n->t('In order to verify your Website store following content in your webroot at \'CloudIdVerificationCode.txt\':');
+				break;
+			default:
+				return new DataResponse([], Http::STATUS_BAD_REQUEST);
+				break;
+		}
+
+		return new DataResponse(['msg' => $msg, 'code' => $code]);
 	}
 
 	/**

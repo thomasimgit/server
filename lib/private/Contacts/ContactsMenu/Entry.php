@@ -38,6 +38,9 @@ class Entry implements IEntry {
 	/** @var string[] */
 	private $emailAddresses = [];
 
+	/** @var string|null */
+	private $avatar;
+
 	/** @var IAction[] */
 	private $actions = [];
 
@@ -77,6 +80,20 @@ class Entry implements IEntry {
 	 */
 	public function getEMailAddresses() {
 		return $this->emailAddresses;
+	}
+
+	/**
+	 * @param string $avatar
+	 */
+	public function setAvatar($avatar) {
+		$this->avatar = $avatar;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getAvatar() {
+		return $this->avatar;
 	}
 
 	/**
@@ -142,6 +159,7 @@ class Entry implements IEntry {
 		return [
 			'id' => $this->id,
 			'fullName' => $this->fullName,
+			'avatar' => $this->getAvatar(),
 			'topAction' => $topAction,
 			'actions' => $otherActions,
 			'lastMessage' => '',

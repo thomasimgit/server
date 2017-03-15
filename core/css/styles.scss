@@ -6,8 +6,8 @@
  * @copyright Copyright (c) 2016, Joas Schilling <coding@schilljs.com>
  * @copyright Copyright (c) 2016, Morris Jobke <hey@morrisjobke.de>
  * @copyright Copyright (c) 2016, Christoph Wurst <christoph@winzerhof-wurst.at>
- * @copyright Copyright (c) 2016, Jan-Christoph Borchardt <hey@jancborchardt.net>
  * @copyright Copyright (c) 2016, Raghu Nayyar <hey@raghunayyar.com>
+ * @copyright Copyright (c) 2011-2017, Jan-Christoph Borchardt <hey@jancborchardt.net>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -1067,16 +1067,18 @@ span.ui-icon {
 }
 
 #contactsmenu > .menu {
-	right: 70px;
+	/* show ~4.5 entries */
+	height: 278px;
 	width: 350px;
+	right: 70px;
 
 	&::after {
 		right: 35px;
 	}
 
-	div.emptycontent {
-		margin-top: 9vh !important;
-		margin-bottom: 5vh;
+	.emptycontent {
+		margin-top: 5vh !important;
+		margin-bottom: 2vh;
 		.icon-loading {
 			position: inherit;
 		}
@@ -1085,22 +1087,27 @@ span.ui-icon {
 		}
 	}
 
-	div.content {
-		/* show ~4.5 entries */
-		max-height: 238px;
+	.content {
+		max-height: calc(100% - 50px);
 		overflow-y: auto;
 
 		.footer {
 			text-align: center;
-			line-height: 50px;
+
+			a {
+				display: block;
+				width: 100%;
+				padding: 12px 0;
+				opacity: .5;
+			}
 		}
 	}
 
-	div.contact {
+	.contact {
 		display: flex;
 		position: relative;
 		align-items: center;
-		padding: 10px;
+		padding: 3px 3px 3px 10px;
 		border-bottom: 1px solid #eeeeee;
 
 		:last-of-type {
@@ -1108,6 +1115,8 @@ span.ui-icon {
 		}
 
 		.avatar {
+			height: 32px;
+			width: 32px;
 			display: inline-block;
 		}
 
@@ -1120,23 +1129,23 @@ span.ui-icon {
 				width: 100%;
 			}
 
-			div.full-name, div.last-message {
+			.full-name, .last-message {
 				/* TODO: don't use fixed width */
-				width: 220px;
+				max-width: 204px;
 				overflow: hidden;
 				white-space: nowrap;
 				text-overflow: ellipsis;
 			}
-			div.last-message {
-				opacity: 0.5;
+			.last-message {
+				opacity: .5;
 			}
 		}
 
 		.top-action, .second-action, .other-actions {
 			width: 16px;
 			height: 16px;
-			padding: 8px;
-			opacity: 0.5;
+			padding: 14px;
+			opacity: .5;
 			cursor: pointer;
 
 			:hover {
@@ -1150,7 +1159,7 @@ span.ui-icon {
 			margin-right: 13px;
 		}
 		.popovermenu::after {
-			right: 3px;
+			right: 2px;
 		}
 	}
 }

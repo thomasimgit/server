@@ -70,4 +70,52 @@ class ContactsStoreTest extends TestCase {
 			], $entries[1]->getEMailAddresses());
 	}
 
+	public function testGetContactsWithoutBinaryImage() {
+		$this->contactsManager->expects($this->once())
+			->method('search')
+			->with($this->equalTo(''), $this->equalTo(['FN']))
+			->willReturn([
+				[
+					'id' => 123,
+				],
+				[
+					'id' => 567,
+					'FN' => 'Darren Roner',
+					'EMAIL' => [
+						'darren@roner.au'
+					],
+					'PHOTO' => base64_encode('photophotophoto'),
+				],
+		]);
+
+		$entries = $this->contactsStore->getContacts('');
+
+		$this->assertCount(2, $entries);
+		$this->assertNull($entries[1]->getAvatar());
+	}
+
+	public function testGetContactsWithoutAvatarURI() {
+		$this->contactsManager->expects($this->once())
+			->method('search')
+			->with($this->equalTo(''), $this->equalTo(['FN']))
+			->willReturn([
+				[
+					'id' => 123,
+				],
+				[
+					'id' => 567,
+					'FN' => 'Darren Roner',
+					'EMAIL' => [
+						'darren@roner.au'
+					],
+					'PHOTO' => 'VALUE=uri:https://photo',
+				],
+		]);
+
+		$entries = $this->contactsStore->getContacts('');
+
+		$this->assertCount(2, $entries);
+		$this->assertEquals('https://photo', $entries[1]->getAvatar());
+	}
+
 }

@@ -33,7 +33,7 @@
 			+ '{{#unless contacts.length}}'
 			+ '<div class="emptycontent">'
 			+ '    <a class="icon-search"></a>'
-			+ '    <h2>' + t('core', 'No contacts found.') + '</h2>'
+			+ '    <h2>' + t('core', 'No contacts found') + '</h2>'
 			+ '</div>'
 			+ '{{/unless}}'
 			+ '<div id="contactsmenu-contacts"></div>'
@@ -48,12 +48,18 @@
 			+ '    <h2>' + t('core', 'Could not load your contacts.') + '</h2>'
 			+ '</div>';
 	var CONTACT_TEMPLATE = ''
+			+ '{{#if contact.avatar}}'
+			+ '<img src="{{contact.avatar}}" class="avatar">'
+			+ '{{else}}'
 			+ '<div class="avatar"></div>'
+			+ '{{/if}}'
 			+ '<div class="body">'
 			+ '    <div class="full-name">{{contact.fullName}}</div>'
 			+ '    <div class="last-message">{{contact.lastMessage}}</div>'
 			+ '</div>'
+			+ '{{#if contact.topAction}}'
 			+ '<a class="top-action {{contact.topAction.icon}}" href="{{contact.topAction.hyperlink}}"></a>'
+			+ '{{/if}}'
 			+ '{{#if contact.hasManyActions}}'
 			+ '    <span class="other-actions icon-more"></span>'
 			+ '    <div class="menu popovermenu">'
@@ -81,6 +87,7 @@
 			fullName: '',
 			lastMessage: '',
 			actions: [],
+			hasOneAction: false,
 			hasTwoActions: false,
 			hasManyActions: false
 		},
@@ -90,7 +97,9 @@
 		 */
 		initialize: function() {
 			// Add needed property for easier template rendering
-			if (this.get('actions').length === 1) {
+			if (this.get('actions').length === 0) {
+				this.set('hasOneAction', true);
+			} else if (this.get('actions').length === 1) {
 				this.set('hasTwoActions', true);
 				this.set('secondAction', this.get('actions')[0]);
 			} else {
@@ -209,7 +218,8 @@
 			}));
 			this.delegateEvents();
 
-			this.$('.avatar').imageplaceholder(this._model.get('fullName'));
+			// Show placeholder iff no avatar is available (avatar is rendered as img, not div)
+			this.$('div.avatar').imageplaceholder(this._model.get('fullName'));
 
 			return this;
 		},
@@ -266,8 +276,7 @@
 		_contacts: undefined,
 
 		events: {
-			'keyup #contactsmenu-search': '_onSearch',
-			'mouseup #contactsmenu-search': '_onSearch'
+			'input #contactsmenu-search': '_onSearch'
 		},
 
 		/**

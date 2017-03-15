@@ -26,7 +26,6 @@ namespace Tests\Contacts\ContactsMenu;
 
 use Exception;
 use OC\Contacts\ContactsMenu\ActionProviderStore;
-use OC\Contacts\ContactsMenu\Providers\DetailsProvider;
 use OC\Contacts\ContactsMenu\Providers\EMailProvider;
 use OCP\AppFramework\QueryException;
 use OCP\ILogger;
@@ -55,19 +54,16 @@ class ActionProviderStoreTest extends TestCase {
 
 	public function testGetProviders() {
 		$emailProvider = $this->createMock(EMailProvider::class);
-		$detailsProvider = $this->createMock(DetailsProvider::class);
 		$this->serverContainer->expects($this->exactly(2))
 			->method('query')
 			->will($this->returnValueMap([
 					[EMailProvider::class, $emailProvider],
-					[DetailsProvider::class, $detailsProvider],
 		]));
 
 		$providers = $this->actionProviderStore->getProviders();
 
-		$this->assertCount(2, $providers);
+		$this->assertCount(1, $providers);
 		$this->assertInstanceOf(EMailProvider::class, $providers[0]);
-		$this->assertInstanceOf(DetailsProvider::class, $providers[1]);
 	}
 
 	/**

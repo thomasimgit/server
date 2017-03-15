@@ -68,13 +68,18 @@ class ContactsStore {
 			$entry->setFullName($contact['FN']);
 		}
 
+		$avatarPrefix = "VALUE=uri:";
+		if (isset($contact['PHOTO']) && strpos($contact['PHOTO'], $avatarPrefix) === 0) {
+			$entry->setAvatar(substr($contact['PHOTO'], strlen($avatarPrefix)));
+		}
+
 		if (isset($contact['EMAIL'])) {
 			foreach ($contact['EMAIL'] as $email) {
 				$entry->addEMailAddress($email);
 			}
 		}
 
-		// Attach all other properties to the entry too becuase some
+		// Attach all other properties to the entry too because some
 		// providers might make use of it.
 		$entry->setProperties($contact);
 

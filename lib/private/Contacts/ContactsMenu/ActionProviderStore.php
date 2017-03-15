@@ -24,7 +24,6 @@
 
 namespace OC\Contacts\ContactsMenu;
 
-use OC\Contacts\ContactsMenu\Providers\DetailsProvider;
 use OC\Contacts\ContactsMenu\Providers\EMailProvider;
 use OCP\AppFramework\QueryException;
 use OCP\Contacts\ContactsMenu\IProvider;
@@ -77,7 +76,6 @@ class ActionProviderStore {
 	private function getServerProviderClasses() {
 		return [
 			EMailProvider::class,
-			DetailsProvider::class,
 		];
 	}
 

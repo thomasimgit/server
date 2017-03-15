@@ -45,6 +45,12 @@ interface IEntry extends JsonSerializable {
 
 	/**
 	 * @since 12.0
+	 * @return string|null image URI
+	 */
+	public function getAvatar();
+
+	/**
+	 * @since 12.0
 	 * @param IAction $action an action to show in the contacts menu
 	 */
 	public function addAction(IAction $action);

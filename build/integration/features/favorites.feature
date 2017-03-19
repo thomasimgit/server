@@ -145,5 +145,5 @@ Feature: favorite
         And user "user1" favorites element "/shared/shared_file.txt"
         When User "user1" moved file "/shared/shared_file.txt" to "/taken_out.txt"
         Then user "user1" in folder "/" should have favorited the following elements
-            | /taken_out.txt |
+            | /remote.php/webdav/taken_out.txt |
 

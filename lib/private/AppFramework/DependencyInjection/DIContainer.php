@@ -53,6 +53,7 @@ use OCP\Federation\ICloudIdManager;
 use OCP\Files\IAppData;
 use OCP\Files\Mount\IMountManager;
 use OCP\RichObjectStrings\IValidator;
+use OCP\Share\IShareHelper;
 use OCP\Util;
 
 class DIContainer extends SimpleContainer implements IAppContainer {
@@ -361,6 +362,10 @@ class DIContainer extends SimpleContainer implements IAppContainer {
 				$this->getServer()->getAppDataDir('identityproof'),
 				$this->getServer()->getCrypto()
 			);
+		});
+
+		$this->registerService(IShareHelper::class, function (SimpleContainer $c) {
+			return $c->query(IShareHelper::class);
 		});
 
 

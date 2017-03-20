@@ -89,6 +89,7 @@ use OC\Security\CredentialsManager;
 use OC\Security\SecureRandom;
 use OC\Security\TrustedDomainHelper;
 use OC\Session\CryptoWrapper;
+use OC\Share20\ShareHelper;
 use OC\Tagging\TagMapper;
 use OCA\Theming\ThemingDefaults;
 use OCP\Federation\ICloudIdManager;
@@ -97,6 +98,7 @@ use OCP\IL10N;
 use OCP\IServerContainer;
 use OCP\RichObjectStrings\IValidator;
 use OCP\Security\IContentSecurityPolicyManager;
+use OCP\Share\IShareHelper;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -843,6 +845,12 @@ class Server extends ServerContainer implements IServerContainer {
 				$c->getLogger(),
 				$c->getJobList(),
 				new TimeFactory()
+			);
+		});
+
+		$this->registerService(IShareHelper::class, function(Server $c) {
+			return new ShareHelper(
+				$c->getLazyRootFolder()
 			);
 		});
 	}

@@ -103,7 +103,8 @@ class SCSSCacher {
 			$folder = $this->appData->newFolder($app);
 		}
 
-		if(!$this->variablesChanged($fileNameCSS, $folder) && $this->isCached($fileNameCSS, $folder)) {
+
+		if(!$this->variablesChanged() && $this->isCached($fileNameCSS, $folder)) {
 			return true;
 		}
 		return $this->cache($path, $fileNameCSS, $fileNameSCSS, $folder, $webDir);
@@ -139,7 +140,6 @@ class SCSSCacher {
 		} catch(NotFoundException $e) {
 			return false;
 		}
-		return false;
 	}
 
 	/**
@@ -148,25 +148,13 @@ class SCSSCacher {
 	 * @param ISimpleFolder $folder
 	 * @return bool
 	 */
-	private function variablesChanged($fileNameCSS, ISimpleFolder $folder) {
+	private function variablesChanged() {
 		$injectedVariables = $this->getInjectedVariables();
 		if($injectedVariables !== '' && $this->config->getAppValue('core', 'scss.variables') !== md5($injectedVariables)) {
 			$this->resetCache();
 			$this->config->setAppValue('core', 'scss.variables', md5($injectedVariables));
 			return true;
 		}
-		try {
-			$variablesFile = \OC::$SERVERROOT . '/core/css/variables.scss';
-			$cachedFile = $folder->getFile($fileNameCSS);
-			if ($cachedFile->getMTime() < filemtime($variablesFile)
-				|| $cachedFile->getSize() === 0
-			) {
-				return true;
-			}
-		} catch (NotFoundException $e) {
-			return true;
-		}
-
 		return false;
 	}
 
@@ -232,7 +220,7 @@ class SCSSCacher {
 	 * Reset scss cache by deleting all generated css files
 	 * We need to regenerate all files when variables change
 	 */
-	public function resetCache() {
+	private function resetCache() {
 		foreach ($this->appData->getDirectoryListing() as $folder) {
 			foreach ($folder->getDirectoryListing() as $file) {
 				if(substr($file->getName(), -3) === "css" || substr($file->getName(), -4) === "deps") {
@@ -245,7 +233,7 @@ class SCSSCacher {
 	/**
 	 * @return string SCSS code for variables from OC_Defaults
 	 */
-	public function getInjectedVariables() {
+	private function getInjectedVariables() {
 		$variables = '';
 		foreach ($this->defaults->getScssVariables() as $key => $value) {
 			$variables .= '$' . $key . ': ' . $value . ';';

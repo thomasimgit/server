@@ -56,14 +56,18 @@ class SCSSCacherTest extends \Test\TestCase {
 		$this->urlGenerator = $this->createMock(IURLGenerator::class);
 		$this->config = $this->createMock(IConfig::class);
 		$this->depsCache = $this->createMock(ICache::class);
+		$this->defaults = $this->createMock(\OC_Defaults::class);
+
 		$this->scssCacher = new SCSSCacher(
 			$this->logger,
 			$this->appData,
 			$this->urlGenerator,
 			$this->config,
+			$this->defaults,
 			\OC::$SERVERROOT,
 			$this->depsCache
 		);
+		$this->defaults->expects($this->any())->method('getScssVariables')->willReturn([]);
 	}
 
 	public function testProcessUncachedFileNoAppDataFolder() {

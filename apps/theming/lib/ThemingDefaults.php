@@ -172,16 +172,16 @@ class ThemingDefaults extends \OC_Defaults {
 	 */
 	public function getScssVariables() {
 		$cache = $this->cacheFactory->create('theming');
-		if($value = $cache->get('getScssVariables')) {
+		if ($value = $cache->get('getScssVariables')) {
 			return $value;
 		}
 
 		$variables = [
-			'theming-cachebuster' => '"'.$this->config->getAppValue('theming', 'cachebuster', '0').'"',
+			'theming-cachebuster' => $this->config->getAppValue('theming', 'cachebuster', '0'),
 		];
 
-		$variables['image-logo'] = "'../../".$this->getLogo()."'";
-		$variables['image-login-background'] = "'../../".$this->getBackground()."'";
+		$variables['image-logo'] = "../../".$this->getLogo();
+		$variables['image-login-background'] = "../../".$this->getBackground();
 
 		if ($this->config->getAppValue('theming', 'color', null) !== null) {
 			if ($this->util->invertTextColor($this->getMailHeaderColor())) {

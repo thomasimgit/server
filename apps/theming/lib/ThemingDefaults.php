@@ -177,11 +177,11 @@ class ThemingDefaults extends \OC_Defaults {
 		}
 
 		$variables = [
-			'theming-cachebuster' => $this->config->getAppValue('theming', 'cachebuster', '0'),
+			'theming-cachebuster' => "'" . $this->config->getAppValue('theming', 'cachebuster', '0') . "'",
 		];
 
-		$variables['image-logo'] = "../../".$this->getLogo();
-		$variables['image-login-background'] = "../../".$this->getBackground();
+		$variables['image-logo'] = "'../../".$this->getLogo()."'";
+		$variables['image-login-background'] = "'../../".$this->getBackground()."'";
 
 		if ($this->config->getAppValue('theming', 'color', null) !== null) {
 			if ($this->util->invertTextColor($this->getMailHeaderColor())) {

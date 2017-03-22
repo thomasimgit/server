@@ -484,9 +484,9 @@ class ThemingDefaultsTest extends TestCase {
 			->method('getFolder')
 			->willReturn($folder);
 		$expected = [
-			'theming-cachebuster' => '0',
-			'image-logo' => '../..//index.php/apps/theming/logo',
-			'image-login-background' => '../..//index.php/apps/theming/loginbackground',
+			'theming-cachebuster' => '\'0\'',
+			'image-logo' => '\'../..//index.php/apps/theming/logo\'',
+			'image-login-background' => '\'../..//index.php/apps/theming/loginbackground\'',
 			'color-primary' => '#000000',
 			'color-primary-text' => '#ffffff'
 

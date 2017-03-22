@@ -26,6 +26,7 @@ namespace OCA\Theming\Tests\Controller;
 
 use OC\Files\AppData\Factory;
 use OC\L10N\L10N;
+use OC\Template\SCSSCacher;
 use OCA\Theming\Controller\ThemingController;
 use OCA\Theming\Util;
 use OCP\App\IAppManager;
@@ -69,9 +70,8 @@ class ThemingControllerTest extends TestCase {
 	private $appManager;
 	/** @var IAppData|\PHPUnit_Framework_MockObject_MockObject */
 	private $appData;
-	private $factory;
-	private $logger;
-	private $urlGenerator;
+	/** @var SCSSCacher */
+	private $scssCacher;
 
 	public function setUp() {
 		$this->request = $this->createMock(IRequest::class);
@@ -87,9 +87,7 @@ class ThemingControllerTest extends TestCase {
 			->willReturn(123);
 		$this->tempManager = \OC::$server->getTempManager();
 		$this->appData = $this->createMock(IAppData::class);
-		$this->factory = $this->createMock(Factory::class);
-		$this->logger = $this->createMock(ILogger::class);
-		$this->urlGenerator = $this->createMock(IURLGenerator::class);
+		$this->scssCacher = $this->createMock(SCSSCacher::class);
 
 		$this->themingController = new ThemingController(
 			'theming',
@@ -101,9 +99,7 @@ class ThemingControllerTest extends TestCase {
 			$this->l10n,
 			$this->tempManager,
 			$this->appData,
-			$this->factory,
-			$this->logger,
-			$this->urlGenerator
+			$this->scssCacher
 		);
 
 		return parent::setUp();
@@ -469,24 +465,12 @@ class ThemingControllerTest extends TestCase {
 
 
 	public function testGetStylesheet() {
-		$appData = $this->createMock(IAppData::class);
-		$appData->expects($this->once())->method('getDirectoryListing')->willReturn([]);
-		$this->themingDefaults->expects($this->any())->method('getScssVariables')->willReturn([
-			'theming-cachebuster' => '0'
-		]);
-		$folder = $this->createMock(ISimpleFolder::class);
+
 		$file = $this->createMock(ISimpleFile::class);
-		$file->expects($this->once())->method('putContent');
 		$file->expects($this->any())->method('getName')->willReturn('theming.css');
 		$file->expects($this->any())->method('getContent')->willReturn('compiled');
-		$depsFile = $this->createMock(ISimpleFile::class);
-		$depsFile->expects($this->once())->method('putContent');
-		$folder->expects($this->at(0))->method('getFile')->with('theming.css')->willThrowException(new NotFoundException());
-		$folder->expects($this->at(1))->method('newFile')->with('theming.css')->willReturn($file);
-		$folder->expects($this->at(2))->method('getFile')->with('theming.css.deps')->willReturn($depsFile);
-		$folder->expects($this->at(3))->method('getFile')->with('theming.css')->willReturn($file);
-		$appData->expects($this->any())->method('getFolder')->willReturn($folder);
-		$this->factory->expects($this->once())->method('get')->willReturn($appData);
+		$this->scssCacher->expects($this->once())->method('process')->willReturn(true);
+		$this->scssCacher->expects($this->once())->method('getCachedCSS')->willReturn($file);
 
 		$response = new Http\FileDisplayResponse($file, Http::STATUS_OK, ['Content-Type' => 'text/css']);
 		$response->cacheFor(86400);
@@ -501,25 +485,11 @@ class ThemingControllerTest extends TestCase {
 	}
 
 	public function testGetStylesheetFails() {
-		$appData = $this->createMock(IAppData::class);
-		$appData->expects($this->once())->method('getDirectoryListing')->willReturn([]);
-		$this->themingDefaults->expects($this->any())->method('getScssVariables')->willReturn([
-			'theming-cachebuster' => '0'
-		]);
-		$folder = $this->createMock(ISimpleFolder::class);
 		$file = $this->createMock(ISimpleFile::class);
-		$file->expects($this->once())->method('putContent');
 		$file->expects($this->any())->method('getName')->willReturn('theming.css');
 		$file->expects($this->any())->method('getContent')->willReturn('compiled');
-		$depsFile = $this->createMock(ISimpleFile::class);
-		$depsFile->expects($this->once())->method('putContent');
-		$folder->expects($this->at(0))->method('getFile')->with('theming.css')->willThrowException(new NotFoundException());
-		$folder->expects($this->at(1))->method('newFile')->with('theming.css')->willReturn($file);
-		$folder->expects($this->at(2))->method('getFile')->with('theming.css.deps')->willReturn($depsFile);
-		$folder->expects($this->at(3))->method('getFile')->with('theming.css')->willThrowException(new NotFoundException());
-		$appData->expects($this->any())->method('getFolder')->willReturn($folder);
-		$this->factory->expects($this->once())->method('get')->willReturn($appData);
-
+		$this->scssCacher->expects($this->once())->method('process')->willReturn(true);
+		$this->scssCacher->expects($this->once())->method('getCachedCSS')->willThrowException(new NotFoundException());
 		$response = new Http\NotFoundResponse();
 
 		$actual = $this->themingController->getStylesheet();

@@ -93,12 +93,14 @@ use OC\Security\SecureRandom;
 use OC\Security\TrustedDomainHelper;
 use OC\Session\CryptoWrapper;
 use OC\Tagging\TagMapper;
+use OC\Template\SCSSCacher;
 use OCA\Theming\ThemingDefaults;
 
 use OCP\App\IAppManager;
 use OCA\Theming\Util;
 use OCP\Federation\ICloudIdManager;
 use OCP\Authentication\LoginCredentials\IStore;
+use OCP\ICache;
 use OCP\ICacheFactory;
 use OCP\IDBConnection;
 use OCP\IL10N;
@@ -837,6 +839,20 @@ class Server extends ServerContainer implements IServerContainer {
 				);
 			}
 			return new \OC_Defaults();
+		});
+		$this->registerService(SCSSCacher::class, function(Server $c) {
+			/** @var Factory $cacheFactory */
+			$cacheFactory = $c->query(Factory::class);
+			return new SCSSCacher(
+				$c->getLogger(),
+				$c->query(\OC\Files\AppData\Factory::class),
+				$c->getURLGenerator(),
+				$c->getConfig(),
+				$c->getThemingDefaults(),
+				\OC::$SERVERROOT,
+				$cacheFactory->createLocal('SCSS')
+
+			);
 		});
 		$this->registerService(EventDispatcher::class, function () {
 			return new EventDispatcher();

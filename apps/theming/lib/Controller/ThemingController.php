@@ -63,19 +63,15 @@ class ThemingController extends Controller {
 	/** @var ITimeFactory */
 	private $timeFactory;
 	/** @var IL10N */
-	private $l;
+	private $l10n;
 	/** @var IConfig */
 	private $config;
 	/** @var ITempManager */
 	private $tempManager;
 	/** @var IAppData */
 	private $appData;
-	/** @var IURLGenerator */
-	private $urlGenerator;
-	/** @var Factory */
-	private $appDataFactory;
-	/** @var ILogger */
-	private $logger;
+	/** @var SCSSCacher */
+	private $scssCacher;
 
 	/**
 	 * ThemingController constructor.
@@ -89,6 +85,7 @@ class ThemingController extends Controller {
 	 * @param IL10N $l
 	 * @param ITempManager $tempManager
 	 * @param IAppData $appData
+	 * @param SCSSCacher $scssCacher
 	 */
 	public function __construct(
 		$appName,
@@ -100,22 +97,18 @@ class ThemingController extends Controller {
 		IL10N $l,
 		ITempManager $tempManager,
 		IAppData $appData,
-		Factory $factory,
-		ILogger $logger,
-		IURLGenerator $urlGenerator
+		SCSSCacher $scssCacher
 	) {
 		parent::__construct($appName, $request);
 
 		$this->themingDefaults = $themingDefaults;
 		$this->util = $util;
 		$this->timeFactory = $timeFactory;
-		$this->l = $l;
+		$this->l10n = $l;
 		$this->config = $config;
 		$this->tempManager = $tempManager;
 		$this->appData = $appData;
-		$this->appDataFactory = $factory;
-		$this->logger = $logger;
-		$this->urlGenerator = $urlGenerator;
+		$this->scssCacher = $scssCacher;
 	}
 
 	/**
@@ -131,7 +124,7 @@ class ThemingController extends Controller {
 				if (strlen($value) > 250) {
 					return new DataResponse([
 						'data' => [
-							'message' => $this->l->t('The given name is too long'),
+							'message' => $this->l10n->t('The given name is too long'),
 						],
 						'status' => 'error'
 					]);
@@ -141,7 +134,7 @@ class ThemingController extends Controller {
 				if (strlen($value) > 500) {
 					return new DataResponse([
 						'data' => [
-							'message' => $this->l->t('The given web address is too long'),
+							'message' => $this->l10n->t('The given web address is too long'),
 						],
 						'status' => 'error'
 					]);
@@ -151,7 +144,7 @@ class ThemingController extends Controller {
 				if (strlen($value) > 500) {
 					return new DataResponse([
 						'data' => [
-							'message' => $this->l->t('The given slogan is too long'),
+							'message' => $this->l10n->t('The given slogan is too long'),
 						],
 						'status' => 'error'
 					]);
@@ -161,7 +154,7 @@ class ThemingController extends Controller {
 				if (!preg_match('/^\#([0-9a-f]{3}|[0-9a-f]{6})$/i', $value)) {
 					return new DataResponse([
 						'data' => [
-							'message' => $this->l->t('The given color is invalid'),
+							'message' => $this->l10n->t('The given color is invalid'),
 						],
 						'status' => 'error'
 					]);
@@ -174,7 +167,7 @@ class ThemingController extends Controller {
 			[
 				'data' =>
 					[
-						'message' => $this->l->t('Saved')
+						'message' => $this->l10n->t('Saved')
 					],
 				'status' => 'success'
 			]
@@ -193,7 +186,7 @@ class ThemingController extends Controller {
 			return new DataResponse(
 				[
 					'data' => [
-						'message' => $this->l->t('No file uploaded')
+						'message' => $this->l10n->t('No file uploaded')
 					]
 				],
 				Http::STATUS_UNPROCESSABLE_ENTITY
@@ -220,7 +213,7 @@ class ThemingController extends Controller {
 				return new DataResponse(
 					[
 						'data' => [
-							'message' => $this->l->t('Unsupported image type'),
+							'message' => $this->l10n->t('Unsupported image type'),
 						],
 						'status' => 'failure',
 					],
@@ -251,7 +244,7 @@ class ThemingController extends Controller {
 				'data' =>
 					[
 						'name' => $name,
-						'message' => $this->l->t('Saved')
+						'message' => $this->l10n->t('Saved')
 					],
 				'status' => 'success'
 			]
@@ -271,7 +264,7 @@ class ThemingController extends Controller {
 				'data' =>
 					[
 						'value' => $value,
-						'message' => $this->l->t('Saved')
+						'message' => $this->l10n->t('Saved')
 					],
 				'status' => 'success'
 			]
@@ -335,31 +328,18 @@ class ThemingController extends Controller {
 	 * @return FileDisplayResponse|NotFoundResponse
 	 */
 	public function getStylesheet() {
-		$appDataCss = $this->appDataFactory->get('css');
-		$cacheBusterValue = $this->config->getAppValue('theming', 'cachebuster', '0');
-
+		$appPath = substr(\OC::$server->getAppManager()->getAppPath('theming'), strlen(\OC::$SERVERROOT) + 1);
 		/* SCSSCacher is required here
 		 * We cannot rely on automatic caching done by \OC_Util::addStyle,
 		 * since we need to add the cacheBuster value to the url
 		 */
-		$SCSSCacher = new SCSSCacher(
-			$this->logger,
-			$appDataCss,
-			$this->urlGenerator,
-			$this->config,
-			$this->themingDefaults,
-			\OC::$SERVERROOT
-		);
-		$appPath = substr(\OC::$server->getAppManager()->getAppPath('theming'), strlen(\OC::$SERVERROOT) + 1);
-		$SCSSCacher->process(
-			\OC::$SERVERROOT,
-			$appPath . '/css/theming.scss',
-			$cacheBusterValue
-		);
+		$cssCached = $this->scssCacher->process(\OC::$SERVERROOT, $appPath . '/css/theming.scss', 'theming');
+		if(!$cssCached) {
+			return new NotFoundResponse();
+		}
 
 		try {
-			$folder = $appDataCss->getFolder($cacheBusterValue);
-			$cssFile = $folder->getFile('theming.css');
+			$cssFile = $this->scssCacher->getCachedCSS('theming', 'theming.css');
 			$response = new FileDisplayResponse($cssFile, Http::STATUS_OK, ['Content-Type' => 'text/css']);
 			$response->cacheFor(86400);
 			$expires = new \DateTime();

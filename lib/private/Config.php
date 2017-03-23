@@ -85,13 +85,15 @@ class Config {
 	 * @return mixed the value or $default
 	 */
 	public function getValue($key, $default = null) {
-		$envValue = getenv(self::ENV_PREFIX . $key);
-		if ($envValue !== false) {
-			return $envValue;
-		}
 
 		if (isset($this->cache[$key])) {
 			return $this->cache[$key];
+		}
+
+		$envValue = getenv(self::ENV_PREFIX . $key);
+		if ($envValue !== false) {
+			$this->cache[$key] = $envValue;
+			return $envValue;
 		}
 
 		return $default;

@@ -60,7 +60,7 @@ class ThemingDefaults extends \OC_Defaults {
 	 * @param IL10N $l
 	 * @param IURLGenerator $urlGenerator
 	 * @param \OC_Defaults $defaults
-	 * @param IRootFolder $appData
+	 * @param IAppData $appData
 	 * @param ICacheFactory $cacheFactory
 	 * @param Util $util
 	 */

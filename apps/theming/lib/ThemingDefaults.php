@@ -141,9 +141,9 @@ class ThemingDefaults extends \OC_Defaults {
 		}
 		$logo = $this->config->getAppValue('theming', 'logoMime', false);
 		if(!$logo || $file === null) {
-			return $this->urlGenerator->imagePath('core','logo.svg');
+			return $this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath('core','logo.svg'));
 		} else {
-			return $this->urlGenerator->linkToRoute('theming.Theming.getLogo');
+			return $this->urlGenerator->linkToRouteAbsolute('theming.Theming.getLogo');
 		}
 	}
 
@@ -180,8 +180,8 @@ class ThemingDefaults extends \OC_Defaults {
 			'theming-cachebuster' => "'" . $this->config->getAppValue('theming', 'cachebuster', '0') . "'",
 		];
 
-		$variables['image-logo'] = "'../../".$this->getLogo()."'";
-		$variables['image-login-background'] = "'../../".$this->getBackground()."'";
+		$variables['image-logo'] = "'".$this->getLogo()."'";
+		$variables['image-login-background'] = "'".$this->getBackground()."'";
 
 		if ($this->config->getAppValue('theming', 'color', null) !== null) {
 			if ($this->util->invertTextColor($this->getMailHeaderColor())) {

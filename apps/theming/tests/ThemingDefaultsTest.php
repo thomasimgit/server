@@ -432,8 +432,6 @@ class ThemingDefaultsTest extends TestCase {
 	}
 
 	public function testGetLogoDefault() {
-		$folder = $this->createMock(ISimpleFolder::class);
-		$file = $this->createMock(ISimpleFile::class);
 		$this->appData->expects($this->once())
 			->method('getFolder')
 			->willThrowException(new NotFoundException());
@@ -442,8 +440,7 @@ class ThemingDefaultsTest extends TestCase {
 			->method('getAppValue')
 			->with('theming', 'logoMime')
 			->willReturn('');
-		$expected = $this->urlGenerator->imagePath('core','logo.svg');
-		$this->assertEquals($expected, $this->template->getLogo());
+		$this->assertEquals('http://localhost/core/img/logo.svg', $this->template->getLogo());
 	}
 
 	public function testGetLogoCustom() {
@@ -458,8 +455,7 @@ class ThemingDefaultsTest extends TestCase {
 			->method('getAppValue')
 			->with('theming', 'logoMime')
 			->willReturn('image/svg+xml');
-		$expected = $this->urlGenerator->linkToRoute('theming.Theming.getLogo');
-		$this->assertEquals($expected, $this->template->getLogo());
+		$this->assertEquals('http://localhost/index.php/apps/theming/logo', $this->template->getLogo());
 	}
 
 	public function testGetScssVariablesCached() {
@@ -485,8 +481,8 @@ class ThemingDefaultsTest extends TestCase {
 			->willReturn($folder);
 		$expected = [
 			'theming-cachebuster' => '\'0\'',
-			'image-logo' => '\'../..//index.php/apps/theming/logo\'',
-			'image-login-background' => '\'../..//index.php/apps/theming/loginbackground\'',
+			'image-logo' => '\'http://localhost/index.php/apps/theming/logo\'',
+			'image-login-background' => '\'/index.php/apps/theming/loginbackground\'',
 			'color-primary' => '#000000',
 			'color-primary-text' => '#ffffff'
 

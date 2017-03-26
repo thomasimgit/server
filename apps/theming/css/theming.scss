@@ -42,12 +42,12 @@
 #header .logo,
 #header .logo-icon {
 	background-size: contain;
-	background-image: url(../#{$image-logo}?v=#{$theming-cachebuster});
+	background-image: url(#{$image-logo}?v=#{$theming-cachebuster});
 }
 
 #body-login,
 #firstrunwizard .firstrunwizard-header {
-	background-image: url(../#{$image-login-background}?v=#{$theming-cachebuster});
+	background-image: url(#{$image-login-background}?v=#{$theming-cachebuster});
 	background-color: $color-primary;
 }
 
